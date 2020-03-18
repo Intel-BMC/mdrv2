@@ -26,13 +26,13 @@ namespace smbios
 {
 
 // Definition follow smbios spec DSP0134 3.0.0
-static const std::map<uint8_t, const char *> processorTypeTable = {
+static const std::map<uint8_t, const char*> processorTypeTable = {
     {0x1, "Other"},          {0x2, "Unknown"},       {0x3, "Central Processor"},
     {0x4, "Math Processor"}, {0x5, "DSP Processor"}, {0x6, "Video Processor"},
 };
 
 // Definition follow smbios spec DSP0134 3.0.0
-static const std::map<uint8_t, const char *> familyTable = {
+static const std::map<uint8_t, const char*> familyTable = {
     {0x1, "Other"},
     {0x2, "Unknown"},
     {0x10, "Pentium II Xeon processor"},
@@ -86,19 +86,20 @@ static const std::array<std::string, 16> characteristicsTable{
     "Reserved",
     "Reserved"};
 
-class Cpu : sdbusplus::server::object::object<
-                sdbusplus::xyz::openbmc_project::Inventory::Item::server::Cpu>
+class Cpu :
+    sdbusplus::server::object::object<
+        sdbusplus::xyz::openbmc_project::Inventory::Item::server::Cpu>
 {
   public:
     Cpu() = delete;
-    Cpu(const Cpu &) = delete;
-    Cpu &operator=(const Cpu &) = delete;
-    Cpu(Cpu &&) = delete;
-    Cpu &operator=(Cpu &&) = delete;
+    Cpu(const Cpu&) = delete;
+    Cpu& operator=(const Cpu&) = delete;
+    Cpu(Cpu&&) = delete;
+    Cpu& operator=(Cpu&&) = delete;
     ~Cpu() = default;
 
-    Cpu(sdbusplus::bus::bus &bus, const std::string &objPath,
-        const uint8_t &cpuId, uint8_t *smbiosTableStorage) :
+    Cpu(sdbusplus::bus::bus& bus, const std::string& objPath,
+        const uint8_t& cpuId, uint8_t* smbiosTableStorage) :
         sdbusplus::server::object::object<
             sdbusplus::xyz::openbmc_project::Inventory::Item::server::Cpu>(
             bus, objPath.c_str()),
@@ -123,7 +124,7 @@ class Cpu : sdbusplus::server::object::object<
   private:
     uint8_t cpuNum;
 
-    uint8_t *storage;
+    uint8_t* storage;
 
     struct ProcessorInfo
     {
@@ -159,13 +160,13 @@ class Cpu : sdbusplus::server::object::object<
     } __attribute__((packed));
 
     void cpuSocket(const uint8_t positionNum, const uint8_t structLen,
-                   uint8_t *dataIn);
+                   uint8_t* dataIn);
     void cpuType(const uint8_t value);
     void cpuFamily(const uint8_t value);
     void cpuManufacturer(const uint8_t positionNum, const uint8_t structLen,
-                         uint8_t *dataIn);
+                         uint8_t* dataIn);
     void cpuVersion(const uint8_t positionNum, const uint8_t structLen,
-                    uint8_t *dataIn);
+                    uint8_t* dataIn);
     void cpuCharacteristics(const uint16_t value);
 };
 

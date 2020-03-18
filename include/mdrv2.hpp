@@ -35,21 +35,22 @@ namespace phosphor
 namespace smbios
 {
 
-static constexpr const char *mdrV2Path = "/xyz/openbmc_project/Smbios/MDR_V2";
+static constexpr const char* mdrV2Path = "/xyz/openbmc_project/Smbios/MDR_V2";
 constexpr const int limitEntryLen = 0xff;
 
-class MDR_V2 : sdbusplus::server::object::object<
-                   sdbusplus::xyz::openbmc_project::Smbios::server::MDR_V2>
+class MDR_V2 :
+    sdbusplus::server::object::object<
+        sdbusplus::xyz::openbmc_project::Smbios::server::MDR_V2>
 {
   public:
     MDR_V2() = delete;
-    MDR_V2(const MDR_V2 &) = delete;
-    MDR_V2 &operator=(const MDR_V2 &) = delete;
-    MDR_V2(MDR_V2 &&) = delete;
-    MDR_V2 &operator=(MDR_V2 &&) = delete;
+    MDR_V2(const MDR_V2&) = delete;
+    MDR_V2& operator=(const MDR_V2&) = delete;
+    MDR_V2(MDR_V2&&) = delete;
+    MDR_V2& operator=(MDR_V2&&) = delete;
     ~MDR_V2() = default;
 
-    MDR_V2(sdbusplus::bus::bus &bus, const char *path, sd_event *event) :
+    MDR_V2(sdbusplus::bus::bus& bus, const char* path, sd_event* event) :
         sdbusplus::server::object::object<
             sdbusplus::xyz::openbmc_project::Smbios::server::MDR_V2>(bus, path),
         bus(bus), timer(event, [&](void) { agentSynchronizeData(); })
@@ -96,11 +97,11 @@ class MDR_V2 : sdbusplus::server::object::object<
   private:
     Timer timer;
 
-    sdbusplus::bus::bus &bus;
+    sdbusplus::bus::bus& bus;
 
     Mdr2DirStruct smbiosDir;
 
-    bool readDataFromFlash(MDRSMBIOSHeader *mdrHdr, uint8_t *data);
+    bool readDataFromFlash(MDRSMBIOSHeader* mdrHdr, uint8_t* data);
 
     const std::array<uint8_t, 16> smbiosTableId{
         40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 0x42};

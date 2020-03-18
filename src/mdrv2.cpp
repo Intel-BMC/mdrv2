@@ -18,10 +18,11 @@
 
 #include <sys/mman.h>
 
-#include <fstream>
 #include <phosphor-logging/elog-errors.hpp>
 #include <sdbusplus/exception.hpp>
 #include <xyz/openbmc_project/Smbios/MDR_V2/error.hpp>
+
+#include <fstream>
 
 namespace phosphor
 {
@@ -178,7 +179,7 @@ std::vector<uint8_t> MDR_V2::getDataInformation(uint8_t idIndex)
     return responseInfo;
 }
 
-bool MDR_V2::readDataFromFlash(MDRSMBIOSHeader *mdrHdr, uint8_t *data)
+bool MDR_V2::readDataFromFlash(MDRSMBIOSHeader* mdrHdr, uint8_t* data)
 {
     if (mdrHdr == nullptr)
     {
@@ -209,7 +210,7 @@ bool MDR_V2::readDataFromFlash(MDRSMBIOSHeader *mdrHdr, uint8_t *data)
             "MDR V2 file size is smaller than mdr header");
         return false;
     }
-    smbiosFile.read(reinterpret_cast<char *>(mdrHdr), sizeof(MDRSMBIOSHeader));
+    smbiosFile.read(reinterpret_cast<char*>(mdrHdr), sizeof(MDRSMBIOSHeader));
     if (mdrHdr->dataSize > smbiosTableStorageSize)
     {
         phosphor::logging::log<phosphor::logging::level::ERR>(
@@ -220,11 +221,11 @@ bool MDR_V2::readDataFromFlash(MDRSMBIOSHeader *mdrHdr, uint8_t *data)
     fileLength -= sizeof(MDRSMBIOSHeader);
     if (fileLength < mdrHdr->dataSize)
     {
-        smbiosFile.read(reinterpret_cast<char *>(data), fileLength);
+        smbiosFile.read(reinterpret_cast<char*>(data), fileLength);
     }
     else
     {
-        smbiosFile.read(reinterpret_cast<char *>(data), mdrHdr->dataSize);
+        smbiosFile.read(reinterpret_cast<char*>(data), mdrHdr->dataSize);
     }
     smbiosFile.close();
     return true;
@@ -267,14 +268,14 @@ bool MDR_V2::sendDirectoryInformation(uint8_t dirVersion, uint8_t dirIndex,
         }
         uint8_t idIndex = dirIndex;
 
-        uint8_t *pData = dirEntry.data();
+        uint8_t* pData = dirEntry.data();
         if (pData == nullptr)
         {
             return false;
         }
         for (uint8_t index = 0; index < returnedEntries; index++)
         {
-            auto data = reinterpret_cast<const Mdr2DirEntry *>(pData);
+            auto data = reinterpret_cast<const Mdr2DirEntry*>(pData);
             smbiosDir.dir[idIndex + index].common.dataVersion =
                 data->dataVersion;
             std::copy(data->id.dataInfo,
@@ -404,7 +405,7 @@ void MDR_V2::systemInfoUpdate()
 
 int MDR_V2::getTotalCpuSlot()
 {
-    uint8_t *dataIn = smbiosDir.dir[smbiosDirIndex].dataStorage;
+    uint8_t* dataIn = smbiosDir.dir[smbiosDirIndex].dataStorage;
     int num = 0;
 
     if (dataIn == nullptr)
@@ -438,7 +439,7 @@ int MDR_V2::getTotalCpuSlot()
 
 int MDR_V2::getTotalDimmSlot()
 {
-    uint8_t *dataIn = smbiosDir.dir[smbiosDirIndex].dataStorage;
+    uint8_t* dataIn = smbiosDir.dir[smbiosDirIndex].dataStorage;
     uint8_t num = 0;
 
     if (dataIn == nullptr)

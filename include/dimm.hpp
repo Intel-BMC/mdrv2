@@ -29,22 +29,22 @@ namespace smbios
 using DeviceType =
     sdbusplus::xyz::openbmc_project::Inventory::Item::server::Dimm::DeviceType;
 
-class Dimm
-    : sdbusplus::server::object::object<
-          sdbusplus::xyz::openbmc_project::Inventory::Item::server::Dimm>,
-      sdbusplus::server::object::object<
-          sdbusplus::xyz::openbmc_project::Inventory::Decorator::server::Asset>
+class Dimm :
+    sdbusplus::server::object::object<
+        sdbusplus::xyz::openbmc_project::Inventory::Item::server::Dimm>,
+    sdbusplus::server::object::object<
+        sdbusplus::xyz::openbmc_project::Inventory::Decorator::server::Asset>
 {
   public:
     Dimm() = delete;
     ~Dimm() = default;
-    Dimm(const Dimm &) = delete;
-    Dimm &operator=(const Dimm &) = delete;
-    Dimm(Dimm &&) = default;
-    Dimm &operator=(Dimm &&) = default;
+    Dimm(const Dimm&) = delete;
+    Dimm& operator=(const Dimm&) = delete;
+    Dimm(Dimm&&) = default;
+    Dimm& operator=(Dimm&&) = default;
 
-    Dimm(sdbusplus::bus::bus &bus, const std::string &objPath,
-         const uint8_t &dimmId, uint8_t *smbiosTableStorage) :
+    Dimm(sdbusplus::bus::bus& bus, const std::string& objPath,
+         const uint8_t& dimmId, uint8_t* smbiosTableStorage) :
 
         sdbusplus::server::object::object<
             sdbusplus::xyz::openbmc_project::Inventory::Item::server::Dimm>(
@@ -74,20 +74,20 @@ class Dimm
   private:
     uint8_t dimmNum;
 
-    uint8_t *storage;
+    uint8_t* storage;
 
     void dimmSize(const uint16_t size);
     void dimmSizeExt(const uint32_t size);
     void dimmDeviceLocator(const uint8_t positionNum, const uint8_t structLen,
-                           uint8_t *dataIn);
+                           uint8_t* dataIn);
     void dimmType(const uint8_t type);
     void dimmTypeDetail(const uint16_t detail);
     void dimmManufacturer(const uint8_t positionNum, const uint8_t structLen,
-                          uint8_t *dataIn);
+                          uint8_t* dataIn);
     void dimmSerialNum(const uint8_t positionNum, const uint8_t structLen,
-                       uint8_t *dataIn);
+                       uint8_t* dataIn);
     void dimmPartNum(const uint8_t positionNum, const uint8_t structLen,
-                     uint8_t *dataIn);
+                     uint8_t* dataIn);
 
     struct MemoryInfo
     {

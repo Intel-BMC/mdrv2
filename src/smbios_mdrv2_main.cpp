@@ -23,7 +23,7 @@
 
 int main(void)
 {
-    sd_event *events = nullptr;
+    sd_event* events = nullptr;
     sd_event_default(&events);
     sdbusplus::bus::bus bus = sdbusplus::bus::new_default();
     sdbusplus::server::manager::manager objManager(bus, "/xyz/openbmc_project");
