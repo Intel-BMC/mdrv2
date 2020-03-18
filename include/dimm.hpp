@@ -88,33 +88,33 @@ class Dimm :
                        uint8_t* dataIn);
     void dimmPartNum(const uint8_t positionNum, const uint8_t structLen,
                      uint8_t* dataIn);
-
-    struct MemoryInfo
-    {
-        uint8_t type;
-        uint8_t length;
-        uint16_t handle;
-        uint16_t phyArrayHandle;
-        uint16_t errInfoHandle;
-        uint16_t totalWidth;
-        uint16_t dataWidth;
-        uint16_t size;
-        uint8_t formFactor;
-        uint8_t deviceSet;
-        uint8_t deviceLocator;
-        uint8_t bankLocator;
-        uint8_t memoryType;
-        uint16_t typeDetail;
-        uint16_t speed;
-        uint8_t manufacturer;
-        uint8_t serialNum;
-        uint8_t assetTag;
-        uint8_t partNum;
-        uint8_t attributes;
-        uint32_t extendedSize;
-        uint16_t confClockSpeed;
-    } __attribute__((packed));
 };
+
+struct MemoryInfo
+{
+    uint8_t type;
+    uint8_t length;
+    uint16_t handle;
+    uint16_t phyArrayHandle;
+    uint16_t errInfoHandle;
+    uint16_t totalWidth;
+    uint16_t dataWidth;
+    uint16_t size;
+    uint8_t formFactor;
+    uint8_t deviceSet;
+    uint8_t deviceLocator;
+    uint8_t bankLocator;
+    uint8_t memoryType;
+    uint16_t typeDetail;
+    uint16_t speed;
+    uint8_t manufacturer;
+    uint8_t serialNum;
+    uint8_t assetTag;
+    uint8_t partNum;
+    uint8_t attributes;
+    uint32_t extendedSize;
+    uint16_t confClockSpeed;
+} __attribute__((packed));
 
 const std::map<uint8_t, DeviceType> dimmTypeTable = {
     {0x1, DeviceType::Other},         {0x2, DeviceType::Unknown},

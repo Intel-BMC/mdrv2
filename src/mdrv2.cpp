@@ -518,5 +518,77 @@ std::vector<uint32_t> MDR_V2::synchronizeDirectoryCommonData(uint8_t idIndex,
     return result;
 }
 
+std::vector<boost::container::flat_map<std::string, RecordVariant>>
+    MDR_V2::getRecordType(size_t type)
+{
+
+    std::vector<boost::container::flat_map<std::string, RecordVariant>> ret;
+    if (type == memoryDeviceType)
+    {
+
+        uint8_t* dataIn = getSMBIOSTypePtr(
+            smbiosDir.dir[smbiosDirIndex].dataStorage, memoryDeviceType);
+
+        if (dataIn == nullptr)
+        {
+            throw std::runtime_error("Data not populated");
+        }
+
+        while ((dataIn = smbiosNextPtr(dataIn)) != nullptr)
+        {
+            if (dataIn == nullptr)
+            {
+                break;
+            }
+            dataIn = getSMBIOSTypePtr(dataIn, memoryDeviceType);
+            if (dataIn == nullptr)
+            {
+                break;
+            }
+            boost::container::flat_map<std::string, RecordVariant>& record =
+                ret.emplace_back();
+
+            auto memoryInfo = reinterpret_cast<MemoryInfo*>(dataIn);
+
+            record["Type"] = memoryInfo->type;
+            record["Length"] = memoryInfo->length;
+            record["Handle"] = uint16_t(memoryInfo->handle);
+            record["Phyiscal Memory Array Handle"] =
+                uint16_t(memoryInfo->phyArrayHandle);
+            record["Memory Error Information Handle"] =
+                uint16_t(memoryInfo->errInfoHandle);
+            record["Total Width"] = uint16_t(memoryInfo->totalWidth);
+            record["Data Width"] = uint16_t(memoryInfo->dataWidth);
+            record["Size"] = uint16_t(memoryInfo->size);
+            record["Form Factor"] = memoryInfo->formFactor;
+            record["Device Set"] = memoryInfo->deviceSet;
+            record["Device Locator"] = positionToString(
+                memoryInfo->deviceLocator, memoryInfo->length, dataIn);
+            record["Bank Locator"] = positionToString(
+                memoryInfo->bankLocator, memoryInfo->length, dataIn);
+            record["Memory Type"] = memoryInfo->memoryType;
+            record["Type Detail"] = uint16_t(memoryInfo->typeDetail);
+            record["Speed"] = uint16_t(memoryInfo->speed);
+            record["Manufacturer"] = positionToString(
+                memoryInfo->manufacturer, memoryInfo->length, dataIn);
+            record["Serial Number"] = positionToString(
+                memoryInfo->serialNum, memoryInfo->length, dataIn);
+            record["Asset Tag"] = positionToString(memoryInfo->assetTag,
+                                                   memoryInfo->length, dataIn);
+            record["Part Number"] = positionToString(
+                memoryInfo->partNum, memoryInfo->length, dataIn);
+            record["Attributes"] = memoryInfo->attributes;
+            record["Extended Size"] = uint32_t(memoryInfo->extendedSize);
+            record["Configured Memory Clock Speed"] =
+                uint32_t(memoryInfo->confClockSpeed);
+        }
+
+        return ret;
+    }
+
+    throw std::invalid_argument("Invalid record type");
+    return ret;
+}
+
 } // namespace smbios
 } // namespace phosphor

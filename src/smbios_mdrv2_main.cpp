@@ -20,9 +20,16 @@
 #include <phosphor-logging/elog-errors.hpp>
 #include <phosphor-logging/elog.hpp>
 #include <sdbusplus/asio/connection.hpp>
+#include <sdbusplus/asio/object_server.hpp>
 
 boost::asio::io_context io;
 auto connection = std::make_shared<sdbusplus::asio::connection>(io);
+auto objServer = sdbusplus::asio::object_server(connection);
+
+sdbusplus::asio::object_server& getObjectServer(void)
+{
+    return objServer;
+}
 
 int main(void)
 {

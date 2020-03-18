@@ -26,18 +26,26 @@
 
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/steady_timer.hpp>
+#include <boost/container/flat_map.hpp>
 #include <phosphor-logging/elog-errors.hpp>
 #include <phosphor-logging/log.hpp>
+#include <sdbusplus/asio/object_server.hpp>
 #include <sdbusplus/server.hpp>
 #include <sdbusplus/timer.hpp>
 #include <xyz/openbmc_project/Smbios/MDR_V2/server.hpp>
 
+sdbusplus::asio::object_server& getObjectServer(void);
+
+using RecordVariant = std::variant<std::string, uint32_t, uint16_t, uint8_t>;
 namespace phosphor
 {
 namespace smbios
 {
 
 static constexpr const char* mdrV2Path = "/xyz/openbmc_project/Smbios/MDR_V2";
+static constexpr const char* smbiosPath = "/xyz/openbmc_project/Smbios";
+static constexpr const char* smbiosInterfaceName =
+    "xyz.openbmc_project.Smbios.GetRecordType";
 constexpr const int limitEntryLen = 0xff;
 
 class MDR_V2 :
@@ -56,7 +64,8 @@ class MDR_V2 :
            boost::asio::io_context& io) :
         sdbusplus::server::object::object<
             sdbusplus::xyz::openbmc_project::Smbios::server::MDR_V2>(bus, path),
-        bus(bus), timer(io)
+        bus(bus), timer(io), smbiosInterface(getObjectServer().add_interface(
+                                 smbiosPath, smbiosInterfaceName))
     {
 
         smbiosDir.agentVersion = smbiosAgentVersion;
@@ -72,6 +81,15 @@ class MDR_V2 :
         smbiosDir.dir[smbiosDirIndex].dataStorage = smbiosTableStorage;
 
         agentSynchronizeData();
+
+        smbiosInterface->register_method("GetRecordType", [this](size_t type) {
+            if (this == nullptr)
+            {
+                throw std::runtime_error("Interface is destroyed");
+            }
+            return getRecordType(type);
+        });
+        smbiosInterface->initialize();
     }
 
     std::vector<uint8_t> getDirectoryInformation(uint8_t dirIndex) override;
@@ -97,6 +115,9 @@ class MDR_V2 :
 
     uint8_t directoryEntries(uint8_t value) override;
 
+    std::vector<boost::container::flat_map<std::string, RecordVariant>>
+        getRecordType(size_t type);
+
   private:
     boost::asio::steady_timer timer;
 
@@ -120,6 +141,7 @@ class MDR_V2 :
     std::vector<std::unique_ptr<Cpu>> cpus;
     std::vector<std::unique_ptr<Dimm>> dimms;
     std::unique_ptr<System> system;
+    std::shared_ptr<sdbusplus::asio::dbus_interface> smbiosInterface;
 };
 
 } // namespace smbios
