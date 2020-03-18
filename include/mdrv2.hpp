@@ -24,6 +24,8 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#include <boost/asio/io_context.hpp>
+#include <boost/asio/steady_timer.hpp>
 #include <phosphor-logging/elog-errors.hpp>
 #include <phosphor-logging/log.hpp>
 #include <sdbusplus/server.hpp>
@@ -50,10 +52,11 @@ class MDR_V2 :
     MDR_V2& operator=(MDR_V2&&) = delete;
     ~MDR_V2() = default;
 
-    MDR_V2(sdbusplus::bus::bus& bus, const char* path, sd_event* event) :
+    MDR_V2(sdbusplus::bus::bus& bus, const char* path,
+           boost::asio::io_context& io) :
         sdbusplus::server::object::object<
             sdbusplus::xyz::openbmc_project::Smbios::server::MDR_V2>(bus, path),
-        bus(bus), timer(event, [&](void) { agentSynchronizeData(); })
+        bus(bus), timer(io)
     {
 
         smbiosDir.agentVersion = smbiosAgentVersion;
@@ -95,7 +98,7 @@ class MDR_V2 :
     uint8_t directoryEntries(uint8_t value) override;
 
   private:
-    Timer timer;
+    boost::asio::steady_timer timer;
 
     sdbusplus::bus::bus& bus;
 

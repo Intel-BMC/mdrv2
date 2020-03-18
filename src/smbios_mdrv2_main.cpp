@@ -16,33 +16,23 @@
 
 #include "mdrv2.hpp"
 
-#include <systemd/sd-event.h>
-
+#include <boost/asio/io_context.hpp>
 #include <phosphor-logging/elog-errors.hpp>
 #include <phosphor-logging/elog.hpp>
+#include <sdbusplus/asio/connection.hpp>
+
+boost::asio::io_context io;
+auto connection = std::make_shared<sdbusplus::asio::connection>(io);
 
 int main(void)
 {
-    sd_event* events = nullptr;
-    sd_event_default(&events);
-    sdbusplus::bus::bus bus = sdbusplus::bus::new_default();
+    sdbusplus::bus::bus& bus = static_cast<sdbusplus::bus::bus&>(*connection);
     sdbusplus::server::manager::manager objManager(bus, "/xyz/openbmc_project");
-    bus.attach_event(events, SD_EVENT_PRIORITY_NORMAL);
     bus.request_name("xyz.openbmc_project.Smbios.MDR_V2");
 
-    phosphor::smbios::MDR_V2 mdrV2(bus, phosphor::smbios::mdrV2Path, events);
+    phosphor::smbios::MDR_V2 mdrV2(bus, phosphor::smbios::mdrV2Path, io);
 
-    while (true)
-    {
-        int r = sd_event_run(events, (uint64_t)-1);
-        if (r < 0)
-        {
-            phosphor::logging::log<phosphor::logging::level::ERR>(
-                "Failure processing request",
-                phosphor::logging::entry("errno=0x%X", -r));
-            return -1;
-        }
-    }
+    io.run();
 
     return 0;
 }

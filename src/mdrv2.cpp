@@ -491,7 +491,6 @@ bool MDR_V2::agentSynchronizeData()
         smbiosDir.dir[smbiosDirIndex].stage = MDR2SMBIOSStatusEnum::mdr2Loaded;
         smbiosDir.dir[smbiosDirIndex].lock = MDR2DirLockEnum::mdr2DirUnlock;
     }
-    timer.stop();
     return true;
 }
 
@@ -506,7 +505,16 @@ std::vector<uint32_t> MDR_V2::synchronizeDirectoryCommonData(uint8_t idIndex,
     result.push_back(smbiosDir.dir[idIndex].common.dataVersion);
     result.push_back(smbiosDir.dir[idIndex].common.timestamp);
 
-    timer.start(usec);
+    timer.expires_after(usec);
+    timer.async_wait([this](boost::system::error_code ec) {
+        if (ec || this == nullptr)
+        {
+            phosphor::logging::log<phosphor::logging::level::ERR>(
+                "Timer Error!");
+            return;
+        }
+        agentSynchronizeData();
+    });
     return result;
 }
 

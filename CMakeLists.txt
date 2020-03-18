@@ -31,6 +31,16 @@ pkg_check_modules (DBUSINTERFACE phosphor-dbus-interfaces REQUIRED)
 include_directories (${DBUSINTERFACE_INCLUDE_DIRS})
 link_directories (${DBUSINTERFACE_LIBRARY_DIRS})
 
+# boost
+include_directories (SYSTEM ${CMAKE_BINARY_DIR}/boost-src)
+set (CMAKE_PREFIX_PATH ${CMAKE_BINARY_DIR}/boost-src ${CMAKE_PREFIX_PATH})
+add_definitions (-DBOOST_ERROR_CODE_HEADER_ONLY)
+add_definitions (-DBOOST_SYSTEM_NO_DEPRECATED)
+add_definitions (-DBOOST_ALL_NO_LIB)
+add_definitions (-DBOOST_NO_RTTI)
+add_definitions (-DBOOST_NO_TYPEID)
+add_definitions (-DBOOST_ASIO_DISABLE_THREADS)
+
 set (SRC_FILES src/mdrv2.cpp src/smbios_mdrv2_main.cpp src/cpu.cpp src/dimm.cpp
      src/system.cpp)
 
