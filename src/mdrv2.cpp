@@ -381,6 +381,8 @@ void MDR_V2::systemInfoUpdate()
             bus, path, index, smbiosDir.dir[smbiosDirIndex].dataStorage));
     }
 
+#ifdef DIMM_DBUS
+
     dimms.clear();
 
     num = getTotalDimmSlot();
@@ -397,6 +399,8 @@ void MDR_V2::systemInfoUpdate()
         dimms.emplace_back(std::make_unique<phosphor::smbios::Dimm>(
             bus, path, index, smbiosDir.dir[smbiosDirIndex].dataStorage));
     }
+
+#endif
 
     system.reset();
     system = std::make_unique<System>(

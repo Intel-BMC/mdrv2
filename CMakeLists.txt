@@ -58,4 +58,10 @@ target_link_libraries (smbiosmdrv2app ${DBUSINTERFACE_LIBRARIES})
 target_link_libraries (smbiosmdrv2app ${SDBUSPLUSPLUS_LIBRARIES})
 target_link_libraries (smbiosmdrv2app phosphor_logging)
 
+option (DIMM_DBUS "Expose DIMM D-Bus Interface" ON)
+
+if (DIMM_DBUS)
+    target_compile_definitions (smbiosmdrv2app PRIVATE DIMM_DBUS)
+endif ()
+
 install (TARGETS smbiosmdrv2app DESTINATION sbin)
