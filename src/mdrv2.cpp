@@ -530,21 +530,17 @@ std::vector<boost::container::flat_map<std::string, RecordVariant>>
     if (type == memoryDeviceType)
     {
 
-        uint8_t* dataIn = getSMBIOSTypePtr(
-            smbiosDir.dir[smbiosDirIndex].dataStorage, memoryDeviceType);
+        uint8_t* dataIn = smbiosDir.dir[smbiosDirIndex].dataStorage;
 
         if (dataIn == nullptr)
         {
             throw std::runtime_error("Data not populated");
         }
 
-        while ((dataIn = smbiosNextPtr(dataIn)) != nullptr)
+        do
         {
-            if (dataIn == nullptr)
-            {
-                break;
-            }
-            dataIn = getSMBIOSTypePtr(dataIn, memoryDeviceType);
+            dataIn =
+                getSMBIOSTypePtr(dataIn, memoryDeviceType, sizeof(MemoryInfo));
             if (dataIn == nullptr)
             {
                 break;
@@ -557,7 +553,7 @@ std::vector<boost::container::flat_map<std::string, RecordVariant>>
             record["Type"] = memoryInfo->type;
             record["Length"] = memoryInfo->length;
             record["Handle"] = uint16_t(memoryInfo->handle);
-            record["Phyiscal Memory Array Handle"] =
+            record["Physical Memory Array Handle"] =
                 uint16_t(memoryInfo->phyArrayHandle);
             record["Memory Error Information Handle"] =
                 uint16_t(memoryInfo->errInfoHandle);
@@ -583,9 +579,28 @@ std::vector<boost::container::flat_map<std::string, RecordVariant>>
                 memoryInfo->partNum, memoryInfo->length, dataIn);
             record["Attributes"] = memoryInfo->attributes;
             record["Extended Size"] = uint32_t(memoryInfo->extendedSize);
-            record["Configured Memory Clock Speed"] =
+            record["Configured Memory Speed"] =
                 uint32_t(memoryInfo->confClockSpeed);
-        }
+            record["Minimum voltage"] = uint16_t(memoryInfo->minimumVoltage);
+            record["Maximum voltage"] = uint16_t(memoryInfo->maximumVoltage);
+            record["Configured voltage"] =
+                uint16_t(memoryInfo->configuredVoltage);
+            record["Memory Technology"] = memoryInfo->memoryTechnology;
+            record["Memory Operating Mode Capabilty"] =
+                uint16_t(memoryInfo->memoryOperatingModeCap);
+            record["Firmare Version"] = memoryInfo->firwareVersion;
+            record["Module Manufacturer ID"] =
+                uint16_t(memoryInfo->modelManufId);
+            record["Module Product ID"] = uint16_t(memoryInfo->modelProdId);
+            record["Memory Subsystem Controller Manufacturer ID"] =
+                uint16_t(memoryInfo->memSubConManufId);
+            record["Memory Subsystem Controller Product Id"] =
+                uint16_t(memoryInfo->memSubConProdId);
+            record["Non-volatile Size"] = uint64_t(memoryInfo->nvSize);
+            record["Volatile Size"] = uint64_t(memoryInfo->volatileSize);
+            record["Cache Size"] = uint64_t(memoryInfo->cacheSize);
+            record["Logical Size"] = uint64_t(memoryInfo->logicalSize);
+        } while ((dataIn = smbiosNextPtr(dataIn)) != nullptr);
 
         return ret;
     }

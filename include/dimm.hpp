@@ -114,6 +114,20 @@ struct MemoryInfo
     uint8_t attributes;
     uint32_t extendedSize;
     uint16_t confClockSpeed;
+    uint16_t minimumVoltage;
+    uint16_t maximumVoltage;
+    uint16_t configuredVoltage;
+    uint8_t memoryTechnology;
+    uint16_t memoryOperatingModeCap;
+    uint8_t firwareVersion;
+    uint16_t modelManufId;
+    uint16_t modelProdId;
+    uint16_t memSubConManufId;
+    uint16_t memSubConProdId;
+    uint64_t nvSize;
+    uint64_t volatileSize;
+    uint64_t cacheSize;
+    uint64_t logicalSize;
 } __attribute__((packed));
 
 const std::map<uint8_t, DeviceType> dimmTypeTable = {

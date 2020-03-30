@@ -16,6 +16,8 @@
 
 #pragma once
 
+#include <phosphor-logging/elog-errors.hpp>
+
 #include <array>
 
 static constexpr const char* mdrType2File = "/var/lib/smbios/smbios2";
@@ -172,7 +174,8 @@ static inline uint8_t* smbiosNextPtr(uint8_t* smbiosDataIn)
 
 // When first time run getSMBIOSTypePtr, need to send the RegionS[].regionData
 // to smbiosDataIn
-static inline uint8_t* getSMBIOSTypePtr(uint8_t* smbiosDataIn, uint8_t typeId)
+static inline uint8_t* getSMBIOSTypePtr(uint8_t* smbiosDataIn, uint8_t typeId,
+                                        size_t size = 0)
 {
     if (smbiosDataIn == nullptr)
     {
@@ -181,9 +184,10 @@ static inline uint8_t* getSMBIOSTypePtr(uint8_t* smbiosDataIn, uint8_t typeId)
     char* smbiosData = reinterpret_cast<char*>(smbiosDataIn);
     while ((*smbiosData != '\0') || (*(smbiosData + 1) != '\0'))
     {
+        uint32_t len = *(smbiosData + 1);
         if (*smbiosData != typeId)
         {
-            uint32_t len = *(smbiosData + 1);
+
             smbiosData += len;
             while ((*smbiosData != '\0') || (*(smbiosData + 1) != '\0'))
             {
@@ -196,6 +200,12 @@ static inline uint8_t* getSMBIOSTypePtr(uint8_t* smbiosDataIn, uint8_t typeId)
             }
             smbiosData += separateLen;
             continue;
+        }
+        if (len < size)
+        {
+            phosphor::logging::log<phosphor::logging::level::ERR>(
+                "Record size mismatch!");
+            return nullptr;
         }
         return reinterpret_cast<uint8_t*>(smbiosData);
     }
