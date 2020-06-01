@@ -84,10 +84,6 @@ class MDR_V2 :
         agentSynchronizeData();
 
         smbiosInterface->register_method("GetRecordType", [this](size_t type) {
-            if (this == nullptr)
-            {
-                throw std::runtime_error("Interface is destroyed");
-            }
             return getRecordType(type);
         });
         smbiosInterface->initialize();
