@@ -34,7 +34,9 @@ sdbusplus::asio::object_server& getObjectServer(void)
 int main(void)
 {
     sdbusplus::bus::bus& bus = static_cast<sdbusplus::bus::bus&>(*connection);
-    sdbusplus::server::manager::manager objManager(bus, "/xyz/openbmc_project");
+    sdbusplus::server::manager::manager objManager(
+        bus, "/xyz/openbmc_project/inventory");
+
     bus.request_name("xyz.openbmc_project.Smbios.MDR_V2");
 
     phosphor::smbios::MDR_V2 mdrV2(bus, phosphor::smbios::mdrV2Path, io);

@@ -58,6 +58,14 @@ target_link_libraries (smbiosmdrv2app ${DBUSINTERFACE_LIBRARIES})
 target_link_libraries (smbiosmdrv2app ${SDBUSPLUSPLUS_LIBRARIES})
 target_link_libraries (smbiosmdrv2app phosphor_logging)
 
+add_executable (cpuinfoapp src/cpuinfo_main.cpp)
+target_link_libraries (cpuinfoapp ${SYSTEMD_LIBRARIES})
+target_link_libraries (cpuinfoapp ${DBUSINTERFACE_LIBRARIES})
+target_link_libraries (cpuinfoapp ${SDBUSPLUSPLUS_LIBRARIES})
+target_link_libraries (cpuinfoapp phosphor_logging)
+target_link_libraries (cpuinfoapp i2c)
+target_link_libraries (cpuinfoapp peci)
+
 option (DIMM_DBUS "Expose DIMM D-Bus Interface" ON)
 
 if (DIMM_DBUS)
@@ -65,3 +73,12 @@ if (DIMM_DBUS)
 endif ()
 
 install (TARGETS smbiosmdrv2app DESTINATION sbin)
+
+install (TARGETS cpuinfoapp
+         RUNTIME DESTINATION bin
+         LIBRARY DESTINATION lib
+         ARCHIVE DESTINATION lib/static)
+
+set (SERVICE_FILES
+     ${PROJECT_SOURCE_DIR}/service_files/xyz.openbmc_project.cpuinfo.service)
+install (FILES ${SERVICE_FILES} DESTINATION /lib/systemd/system/)
