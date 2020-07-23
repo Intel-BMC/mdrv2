@@ -84,7 +84,7 @@ typedef struct
     DataIdStruct id;
     uint32_t size;
     uint32_t dataSetSize;
-    uint32_t dataVersion;
+    uint8_t dataVersion;
     uint32_t timestamp;
 } Mdr2DirEntry;
 

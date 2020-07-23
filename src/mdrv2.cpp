@@ -155,6 +155,17 @@ inline uint8_t MDR_V2::smbiosValidFlag(uint8_t index)
     return static_cast<uint8_t>(ret);
 }
 
+// If source variable size is 4 bytes (uint32_t) and destination is Vector type
+// is 1 byte (uint8_t), then by using this API can copy data byte by byte. For
+// Example copying data from smbiosDir.dir[idIndex].common.size and
+// smbiosDir.dir[idIndex].common.timestamp to vector variable responseInfo
+template <typename T>
+void appendReversed(std::vector<uint8_t>& vector, const T& value)
+{
+    auto data = reinterpret_cast<const uint8_t*>(&value);
+    std::reverse_copy(data, data + sizeof(value), std::back_inserter(vector));
+}
+
 std::vector<uint8_t> MDR_V2::getDataInformation(uint8_t idIndex)
 {
     std::vector<uint8_t> responseInfo;
@@ -171,10 +182,11 @@ std::vector<uint8_t> MDR_V2::getDataInformation(uint8_t idIndex)
         responseInfo.push_back(
             smbiosDir.dir[idIndex].common.id.dataInfo[index]);
     }
+
     responseInfo.push_back(smbiosValidFlag(idIndex));
-    responseInfo.push_back(smbiosDir.dir[idIndex].common.size);
+    appendReversed(responseInfo, smbiosDir.dir[idIndex].common.size);
     responseInfo.push_back(smbiosDir.dir[idIndex].common.dataVersion);
-    responseInfo.push_back(smbiosDir.dir[idIndex].common.timestamp);
+    appendReversed(responseInfo, smbiosDir.dir[idIndex].common.timestamp);
 
     return responseInfo;
 }
