@@ -46,8 +46,7 @@ struct CPUInfo : sdbusplus::server::object_t<asset>
     CPUInfo& operator=(CPUInfo&&) = delete;
     ~CPUInfo() = default;
 
-    CPUInfo(sdbusplus::bus::bus& bus, const std::string& path,
-            const uint8_t& cpuId) :
+    CPUInfo(sdbusplus::bus::bus& bus, const std::string& path) :
         sdbusplus::server::object_t<asset>(bus, path.c_str())
     {}
 

@@ -102,7 +102,7 @@ static std::optional<std::string> readSSpec(uint8_t bus, uint8_t slaveAddr,
         return std::nullopt;
     }
 
-    uint8_t value = 0;
+    int value = 0;
     std::string sspec;
     sspec.reserve(count);
 
@@ -115,9 +115,16 @@ static std::optional<std::string> readSSpec(uint8_t bus, uint8_t slaveAddr,
                 "Error in i2c read!",
                 phosphor::logging::entry("PATH=%s", devPath.c_str()),
                 phosphor::logging::entry("SLAVEADDR=0x%x", slaveAddr));
-            break;
+            ::close(fd);
+            return std::nullopt;
         }
-        sspec.push_back(value);
+        if (!std::isprint(static_cast<unsigned char>(value)))
+        {
+            phosphor::logging::log<phosphor::logging::level::ERR>(
+                "Non printable value in sspec, ignored.");
+            continue;
+        }
+        sspec.push_back(static_cast<unsigned char>(value));
     }
     ::close(fd);
     return sspec;
@@ -143,7 +150,7 @@ static std::shared_ptr<CPUInfo>
 {
     std::string path = cpuPath + std::to_string(cpu);
     std::shared_ptr<CPUInfo> cpuInfo = std::make_shared<CPUInfo>(
-        static_cast<sdbusplus::bus::bus&>(*conn), path, cpu);
+        static_cast<sdbusplus::bus::bus&>(*conn), path);
     return cpuInfo;
 }
 
