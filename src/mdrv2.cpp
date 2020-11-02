@@ -342,7 +342,7 @@ int MDR_V2::findIdIndex(std::vector<uint8_t> dataInfo)
         phosphor::logging::log<phosphor::logging::level::ERR>(
             "Length of dataInfo invalid");
         throw sdbusplus::xyz::openbmc_project::Smbios::MDR_V2::Error::
-            InvalidParameter();
+            InvalidId();
     }
     std::array<uint8_t, 16> arrayDataInfo;
 
