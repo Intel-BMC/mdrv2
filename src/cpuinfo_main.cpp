@@ -55,6 +55,16 @@ using CPUMap =
                                std::pair<int, std::shared_ptr<CPUInfo>>>;
 
 static CPUMap cpuMap = {};
+// constants for reading QDF string from PIROM
+// Currently, they are the same for platforms with icx
+// todo: move into configuration file to be more robust
+static constexpr uint8_t i2cBus = 13;
+static constexpr uint8_t slaveAddr0 = 0x50;
+static constexpr uint8_t regAddr = 0xf;
+static constexpr uint8_t sspecSize = 4;
+
+// Get CPU PPIN PECI commands retry count
+static uint8_t retryCount = 6;
 
 static std::optional<std::string> readSSpec(uint8_t bus, uint8_t slaveAddr,
                                             uint8_t regAddr, size_t count)
@@ -154,18 +164,7 @@ static std::shared_ptr<CPUInfo>
     return cpuInfo;
 }
 
-// constants for reading QDF string from PIROM
-// Currently, they are the same for platforms with icx
-// \todo: move into configuration file to be more robust
-static constexpr uint8_t i2cBus = 13;
-static constexpr uint8_t slaveAddr0 = 0x50;
-static constexpr uint8_t regAddr = 0xf;
-static constexpr uint8_t sspecSize = 4;
-
-static void updateSerialNumber(boost::asio::steady_timer& peciWaitTimer,
-                               const uint8_t clientAddr,
-                               std::shared_ptr<CPUInfo>& cpuInfo,
-                               uint8_t retryCount)
+static std::optional<std::string> getCPUSerialNumber(const uint8_t clientAddr)
 {
     // get processor ID
     static constexpr uint8_t u8Size = 4; // default to a DWORD
@@ -184,7 +183,7 @@ static void updateSerialNumber(boost::asio::steady_timer& peciWaitTimer,
             "peci read package config failed at address",
             phosphor::logging::entry("PECIADDR=0x%x", clientAddr),
             phosphor::logging::entry("CC=0x%x", cc));
-        u32PkgValueLow = 0;
+        return std::nullopt;
     }
 
     if (PECI_CC_SUCCESS != peci_RdPkgConfig(clientAddr, u8PPINPkgIndex,
@@ -195,68 +194,38 @@ static void updateSerialNumber(boost::asio::steady_timer& peciWaitTimer,
             "peci read package config failed at address",
             phosphor::logging::entry("PECIADDR=0x%x", clientAddr),
             phosphor::logging::entry("CC=0x%x", cc));
-        u32PkgValueHigh = 0;
+        return std::nullopt;
     }
 
     // If cpuPPIN is valid, set serial number and exit.
-    if (0 != u32PkgValueLow && 0 != u32PkgValueHigh)
+    if (!u32PkgValueLow || !u32PkgValueHigh)
     {
-        uint64_t cpuPPIN =
-            u32PkgValueLow | (static_cast<uint64_t>(u32PkgValueHigh) << 32);
-        cpuPPIN = u32PkgValueLow;
-        cpuPPIN |= static_cast<uint64_t>(u32PkgValueHigh) << 32;
-        std::stringstream stream;
-        stream << std::hex << cpuPPIN;
-        std::string serialNumber(stream.str());
-        cpuInfo->serialNumber(serialNumber);
-        return;
+        phosphor::logging::log<phosphor::logging::level::ERR>(
+            "peci reads zero serial number",
+            phosphor::logging::entry("PECIADDR=0x%x", clientAddr));
+        return std::nullopt;
     }
 
-    // If PPIN is not valid, Retry for 3 times with 60 seconds delay.
-    if (0 == retryCount)
-    {
-        return;
-    }
-
-    retryCount--;
-    peciWaitTimer.expires_after(
-        std::chrono::seconds(6 * phosphor::cpu_info::peciCheckInterval));
-    peciWaitTimer.async_wait([&peciWaitTimer, clientAddr(std::move(clientAddr)),
-                              &cpuInfo, retryCount(std::move(retryCount))](
-                                 const boost::system::error_code& ec) {
-        if (ec)
-        {
-            // operation_aborted is expected if timer is canceled
-            // before completion.
-            if (ec != boost::asio::error::operation_aborted)
-            {
-                phosphor::logging::log<phosphor::logging::level::ERR>(
-                    " async_wait to Get CPU PPIN failed.",
-                    phosphor::logging::entry("EC=0x%x", ec.value()));
-            }
-            return;
-        }
-        phosphor::cpu_info::updateSerialNumber(peciWaitTimer, clientAddr,
-                                               cpuInfo, retryCount);
-    });
+    uint64_t cpuPPIN =
+        u32PkgValueLow | (static_cast<uint64_t>(u32PkgValueHigh) << 32);
+    cpuPPIN = u32PkgValueLow;
+    cpuPPIN |= static_cast<uint64_t>(u32PkgValueHigh) << 32;
+    std::stringstream stream;
+    stream << std::hex << cpuPPIN;
+    return stream.str();
 }
 
 static void getProcessorInfo(boost::asio::steady_timer& peciWaitTimer,
-                             std::shared_ptr<sdbusplus::asio::connection>& conn,
-                             sdbusplus::asio::object_server& objServer,
                              CPUMap& cpuMap)
 {
+    bool waitAndRetry = false;
 
     for (auto& cpu : cpuMap)
     {
+        std::shared_ptr<CPUInfo> cpuInfo = cpu.second.second;
         uint8_t cc = 0;
         CPUModel model{};
         uint8_t stepping = 0;
-        uint8_t retryCount = 3;
-
-        std::shared_ptr<CPUInfo> cpuInfo =
-            createCPUInfo(conn, cpu.second.first);
-        cpu.second.second = cpuInfo;
 
         if (peci_GetCPUID(cpu.first, &model, &stepping, &cc) != PECI_CC_SUCCESS)
         {
@@ -270,8 +239,16 @@ static void getProcessorInfo(boost::asio::steady_timer& peciWaitTimer,
         {
             case icx:
             {
-                updateSerialNumber(peciWaitTimer, cpu.first, cpu.second.second,
-                                   retryCount);
+                std::optional<std::string> cpuSerialNumber =
+                    getCPUSerialNumber(cpu.first);
+                if (cpuSerialNumber != std::nullopt)
+                {
+                    cpuInfo->serialNumber(cpuSerialNumber.value_or(""));
+                }
+                else
+                {
+                    waitAndRetry = true;
+                }
 
                 // assuming the slaveAddress will be incrementing like peci
                 // client address
@@ -287,6 +264,32 @@ static void getProcessorInfo(boost::asio::steady_timer& peciWaitTimer,
                 break;
         }
     }
+
+    // If PPIN is not valid, Retry for 6 times with 60 seconds delay.
+    if ((!waitAndRetry) || (0 == retryCount))
+    {
+        return;
+    }
+
+    retryCount--;
+    peciWaitTimer.expires_after(
+        std::chrono::seconds(6 * phosphor::cpu_info::peciCheckInterval));
+    peciWaitTimer.async_wait(
+        [&peciWaitTimer, &cpuMap](const boost::system::error_code& ec) {
+            if (ec)
+            {
+                // operation_aborted is expected if timer is canceled
+                // before completion.
+                if (ec != boost::asio::error::operation_aborted)
+                {
+                    phosphor::logging::log<phosphor::logging::level::ERR>(
+                        " async_wait to Get CPU PPIN failed.",
+                        phosphor::logging::entry("EC=0x%x", ec.value()));
+                }
+                return;
+            }
+            phosphor::cpu_info::getProcessorInfo(peciWaitTimer, cpuMap);
+        });
 }
 
 static bool isPECIAvailable(void)
@@ -312,7 +315,17 @@ static void
     {
         // get the PECI client address list
         getPECIAddrMap(cpuMap);
-        getProcessorInfo(peciWaitTimer, conn, objServer, cpuMap);
+
+        // CreateCPUInfo object and copy to map
+        for (auto& cpu : cpuMap)
+        {
+            std::shared_ptr<CPUInfo> cpuInfo =
+                createCPUInfo(conn, cpu.second.first);
+            cpu.second.second = cpuInfo;
+        }
+
+        // Fill CPU information
+        getProcessorInfo(peciWaitTimer, cpuMap);
     }
     if (!peciAvailable || !cpuMap.size())
     {
