@@ -227,6 +227,11 @@ static void getProcessorInfo(boost::asio::steady_timer& peciWaitTimer,
         CPUModel model{};
         uint8_t stepping = 0;
 
+        if (!cpuInfo)
+        {
+            continue;
+        }
+
         if (peci_GetCPUID(cpu.first, &model, &stepping, &cc) != PECI_CC_SUCCESS)
         {
             phosphor::logging::log<phosphor::logging::level::ERR>(
